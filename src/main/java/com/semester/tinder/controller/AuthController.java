@@ -31,4 +31,9 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(refreshTokenRequest));
     }
 
+    @PostMapping("/signin/social")
+    public ResponseEntity<ReqRes> social(@RequestBody ReqRes refreshTokenRequest){
+        return ResponseEntity.ok( authService.signSocial(refreshTokenRequest) );
+    }
+
 }

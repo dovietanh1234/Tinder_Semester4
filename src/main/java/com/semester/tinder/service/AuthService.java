@@ -71,19 +71,62 @@ public class AuthService {
                 // mà có thể được gọi để xác thực Authentication object được cung cấp
                 var n_user = _iUserRepo.findByEmail(signinRequest.getEmail()).orElseThrow();
                 System.out.println("USER IS: " + n_user);
+
                  var jwt = _jwtUtils.generateToken(n_user);
                  var refreshToken = _jwtUtils.generateRefreshToken( new HashMap<>(), n_user);
+
                  response.setStatusCode(200);
                  response.setToken(jwt);
                  response.setRefreshToken( refreshToken );
                  response.setExpirationTime("24hour");
                  response.setMessage("successfully signed in");
+
             }catch (Exception e){
                 response.setStatusCode(500);
                 response.setError(e.getMessage());
             }
             return response;
     }
+
+    public ReqRes signSocial(ReqRes registrationRequest){
+        ReqRes response = new ReqRes();
+
+        try{
+
+         Optional<User> U = _iUserRepo.findByEmail(registrationRequest.getEmail());
+            User user_n = null;
+         if(U.isEmpty()){
+             User user = new User();
+             user.setFullname(registrationRequest.getName());
+             user.setEmail(registrationRequest.getEmail());
+             user.setPassword(_passwordEncoder.encode("12345678"));
+             user.setIsBlock(false);
+             Optional<Role> role = _iRoleRepo.findById(1);
+             role.ifPresent(user::setRole);
+             user_n =  _iUserRepo.save( user );
+         } else{
+             user_n = U.get();
+         }
+
+         _authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(registrationRequest.getEmail(), "12345678"));
+         var refreshToken = _jwtUtils.generateRefreshToken( new HashMap<>(), user_n);
+
+         response.setStatusCode(200);
+         response.setToken(_jwtUtils.generateToken(user_n));
+         response.setRefreshToken( refreshToken );
+         response.setExpirationTime("24hour");
+         response.setMessage("successfully signed in");
+
+
+        }catch (Exception e){
+            response.setStatusCode(400);
+            response.setError(e.getMessage());
+        }
+
+        return response;
+    }
+
+
 
     public ReqRes refreshToken( ReqRes refreshTokenRequest ){
         ReqRes response = new ReqRes();
