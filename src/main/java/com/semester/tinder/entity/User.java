@@ -1,9 +1,11 @@
 package com.semester.tinder.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.semester.tinder.repository.IRoleRepo;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,7 +25,7 @@ public class User implements UserDetails {
 
     private String phone_number;
 
-    private Boolean isBlock;
+    private Boolean isBlock = false;
 
     @ManyToOne
     @JoinColumn(name = "role_id")
@@ -34,6 +36,14 @@ public class User implements UserDetails {
     private double longitude;
 
     private String password;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "implementer")
+    private List<Follower> people_i_follow;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "affected_person")
+    private List<Follower> my_followers;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

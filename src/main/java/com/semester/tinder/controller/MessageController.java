@@ -5,6 +5,7 @@ import com.semester.tinder.dto.firebase.Message;
 import com.semester.tinder.dto.firebase.MessageFormCreate;
 import com.semester.tinder.dto.response.ApiResponse;
 import com.semester.tinder.service.message.MessageFirebaseService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,21 +17,28 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 @RestController
-@RequestMapping("/public")
+@RequestMapping("/auth")
+@RequiredArgsConstructor
 public class MessageController {
-
-    @Autowired
     public MessageFirebaseService _messageFireBaseService;
 
-    @PostMapping("/create")
-    public ApiResponse<String> create(@RequestBody MessageFormCreate message) throws ExecutionException, InterruptedException, IOException {
+    @PostMapping("/create-message")
+    public ApiResponse<String> createMessage(@ModelAttribute MessageFormCreate message) {
 
         ApiResponse<String> result = new ApiResponse<>();
 
-        String Image = null;
+        String Image = "";
         // HANDLE IMAGE:
     if( message.getMultipartFile() != null ){
         Image = _messageFireBaseService.uploadFile( message.getMultipartFile() );
+        if(Image == null){
+
+            result.setMessage("error handle image");
+            result.setCode(400);
+
+            return result;
+        }
+
     }
 
     Message message1 = new Message();
@@ -49,7 +57,7 @@ public class MessageController {
     }
 
     @GetMapping("/get-message")
-    public ApiResponse<List<Message>> getList(@RequestBody GetMessagedto messagedto) throws ExecutionException, InterruptedException {
+    public ApiResponse<List<Message>> getList(@ModelAttribute GetMessagedto messagedto) throws ExecutionException, InterruptedException {
 
         ApiResponse<List<Message>> result = new ApiResponse<>();
 

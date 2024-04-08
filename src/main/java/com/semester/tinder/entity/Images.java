@@ -9,38 +9,28 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
-@Entity(name="profile")
+@Entity(name = "images")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Profile {
+public class Images {
 
     @Id
     private int id;
+
+    private String image;
 
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "u_id")
     private User user;
 
-    private String bio;
+    private String image2;
 
-    private String relationship_goals;
+    private String image3;
 
-    private String interests;
+    private String image4;
 
-    private String height;
-
-    private String languages;
-
-    private int age;
-
-    private Date date_birth;
-
-    private String passions;
-
-    private String about_me;
+    private String image5;
 
 }
