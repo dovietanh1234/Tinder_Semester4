@@ -1,11 +1,7 @@
 package com.semester.tinder.controller.properties;
 
-import com.semester.tinder.dto.request.Report.ReportRequest;
 import com.semester.tinder.dto.request.Setting.SettingRequest;
-import com.semester.tinder.dto.request.lifestyle.LifestyleRequest;
 import com.semester.tinder.dto.response.ApiResponse;
-import com.semester.tinder.entity.Lifestyle;
-import com.semester.tinder.entity.Report;
 import com.semester.tinder.entity.Setting;
 import com.semester.tinder.entity.User;
 import com.semester.tinder.repository.ISettingRepo;
@@ -14,11 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/user/setting")
+@RequestMapping("/public/setting")
 public class SettingController {
 
     @Autowired
@@ -28,12 +23,13 @@ public class SettingController {
     private IUserRepo _iuserRepo;
 
     @GetMapping("/getId")
-    public ResponseEntity<ApiResponse<Setting>> getProfile(@RequestParam int settingId){
+    public ResponseEntity<ApiResponse<Setting>> getProfile(@RequestParam int id){
 
         ApiResponse<Setting> result = new ApiResponse<>();
 
-        Optional<Setting> p = _iSettingRepo.findById(settingId);
+        Optional<User> u = _iuserRepo.findById(id);
 
+        Optional<Setting> p = _iSettingRepo.findByUser(u.orElse(null));
         if( p.isEmpty() ){
             result.setMessage("error! data not found");
             result.setCode(404);
@@ -48,11 +44,13 @@ public class SettingController {
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<ApiResponse<String>> deleteP(@RequestParam int settingId){
+    public ResponseEntity<ApiResponse<String>> deleteP(@RequestParam int id){
 
         ApiResponse<String> result = new ApiResponse<>();
 
-        Optional<Setting> p = _iSettingRepo.findById(settingId);
+        Optional<User> u = _iuserRepo.findById(id);
+
+        Optional<Setting> p = _iSettingRepo.findByUser( u.orElse(null) );
 
         if( p.isEmpty() ){
             result.setMessage("error! data not found");
@@ -64,7 +62,7 @@ public class SettingController {
 
         result.setMessage("successfully");
         result.setCode(200);
-        result.setResult("delete profile id: " + settingId + " successfully");
+        result.setResult("delete profile id: " + p.get().getId() + " successfully");
         return ResponseEntity.ok(result);
 
     }

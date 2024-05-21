@@ -1,23 +1,46 @@
 package com.semester.tinder.controller;
 
 import com.semester.tinder.dto.firebase.StatusEnum;
+import com.semester.tinder.dto.request.Follower.LikeUserRequest;
+import com.semester.tinder.dto.request.Follower.StatusFollower;
+import com.semester.tinder.dto.request.RabbitMQ.Notification;
 import com.semester.tinder.dto.request.Test.Message;
+import com.semester.tinder.dto.response.ApiResponse;
+import com.semester.tinder.entity.Follower;
+import com.semester.tinder.entity.User;
+import com.semester.tinder.repository.IFollowerRepo;
+import com.semester.tinder.repository.IUserRepo;
+import com.semester.tinder.service.RappidMQ.RabbitMQService;
 import com.semester.tinder.service.message.MessageFirebaseService;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Controller;
 
 import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 
 @Controller
 public class TestController {
+
+    @Autowired
+    private IUserRepo _iUserRepo;
+
+    @Autowired
+    private IFollowerRepo _iFollowerRepo;
+
+    @Autowired
+    private RabbitMQService rabbitMQService;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
@@ -89,18 +112,54 @@ public class TestController {
 //    @SendTo("/instance/topic/123")
 @MessageMapping("/message/{roomId}")
 @SendTo("/chatroom/public/{roomId}")
-    public Message message1(@DestinationVariable String roomId, Message message) throws ExecutionException, InterruptedException {
+//@Async
+    public Message message1(@DestinationVariable String roomId, Message message) {
         System.out.println(message.toString());
         System.out.println(roomId);
 
-      //  simpMessagingTemplate.convertAndSend("/instance/topic/" + roomId, message  );//  user/David/private
+        // save message in fire base:
+            CompletableFuture.runAsync( ()  -> {
+                Notification no = new Notification();
+            try {
 
-        // save message in fire base
+                message.setTimeSent( new Date() );
+                message.setStatus( StatusEnum.SENT );
 
-        System.out.println("chạy thành công");
-        // _messageFireBaseService.createSocketMessage(message);
+
+                _messageFireBaseService.createSocketMessage(message);
+
+                // 2. save thong bao vao firebase.
+                no.setId( UUID.randomUUID().toString() );
+                no.setSenderId(message.getSenderId());
+                no.setCodeNotify(2);
+                no.setTitle("Thông báo có tin nhắn mới từ " + message.getNameSender()); // bo sung doan nay vao react guu du lieu len!
+                no.setRead(false);
+                no.setContent(message.getMessage());
+                no.setReceiverId(message.getReceiverId());
+               // no.setUrlAttached("localhost:3000/123/123");
+                no.setTimeNotify( new Date());
+                _messageFireBaseService.createNotify(no);
+                // 1. guu thong bao cho node js:
+                  rabbitMQService.sendMessage("node_channel", no);
+
+            }catch (Exception e){
+                no.setCodeNotify(2);
+                no.setTitle("Có lỗi xảy ra:");
+                no.setContent("Tin nhắn gửu đi đã bị lỗi ");
+                no.setReceiverId(message.getSenderId());
+                no.setTimeNotify( new Date() );
+
+                rabbitMQService.sendMessage("node_channel", no);
+            }
+
+        } );    
+
         return message;
     }
+
+// quy chuẩn thah một cái form gửu thông báo .
+
+
 
 
 }

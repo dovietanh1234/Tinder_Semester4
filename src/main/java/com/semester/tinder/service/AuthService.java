@@ -1,8 +1,12 @@
 package com.semester.tinder.service;
 
 import com.semester.tinder.dto.ReqRes;
+import com.semester.tinder.dto.request.Profile.DetailUser;
+import com.semester.tinder.dto.response.ApiResponse;
+import com.semester.tinder.entity.Profile;
 import com.semester.tinder.entity.Role;
 import com.semester.tinder.entity.User;
+import com.semester.tinder.repository.IProfileRepo;
 import com.semester.tinder.repository.IRoleRepo;
 import com.semester.tinder.repository.IUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +29,9 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder _passwordEncoder; // related to passwordEncoder
+
+    @Autowired
+    private IProfileRepo _iProfileRepo;
 
     @Autowired
     private AuthenticationManager _authenticationManager; // related to quan ly phan quyen!
@@ -104,19 +111,29 @@ public class AuthService {
              Optional<Role> role = _iRoleRepo.findById(1);
              role.ifPresent(user::setRole);
              user_n =  _iUserRepo.save( user );
+             //response.setIsHasProfile( false );
          } else{
              user_n = U.get();
+            // response.setIsHasProfile( true );
+         }
+
+         Optional<Profile> p = _iProfileRepo.findByUser( user_n );
+         if( p.isEmpty() ){
+             response.setIsHasProfile( false );
+         }else{
+             response.setIsHasProfile( true );
          }
 
          _authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(registrationRequest.getEmail(), "12345678"));
          var refreshToken = _jwtUtils.generateRefreshToken( new HashMap<>(), user_n);
 
+         //response.setId_user( U.get().getId() );
          response.setStatusCode(200);
          response.setToken(_jwtUtils.generateToken(user_n));
          response.setRefreshToken( refreshToken );
          response.setExpirationTime("24hour");
+         response.setId_user(user_n.getId());
          response.setMessage("successfully signed in");
-
 
         }catch (Exception e){
             response.setStatusCode(400);
@@ -145,10 +162,37 @@ public class AuthService {
         }
         response.setStatusCode(500);
         return response;
+    }
+
+    public ApiResponse<DetailUser> sendTokenGetDetail(String Token ){
+
+        String EmailU = _jwtUtils.extractUsername(Token);
+        Optional<User> u = _iUserRepo.findByEmail( EmailU );
+
+        ApiResponse<DetailUser> result = new ApiResponse<>();
+        if( u.isEmpty() ){
+            result.setMessage("ERROR");
+            result.setCode(404);
+        }
+
+        DetailUser dt = new DetailUser();
+        dt.setEmail( EmailU );
+        dt.setId( u.get().getId() );
+        dt.setFull_name( u.get().getFullname() );
+        dt.setPhone_number( u.get().getPhone_number() );
+        dt.setImages( u.get().getImages() );
+
+        result.setMessage("SUCCESSFULLY");
+        result.setCode(200);
+        result.setResult(dt);
+        return result;
+
 
     }
 
 }
+
+
 
 /*
 * if( role.isPresent() ){

@@ -13,10 +13,13 @@ import java.util.Date;
 @AllArgsConstructor
 @ToString
 public class Message {
-    private int senderId;
-    private int receiverId;
     private int matchId;
-    private Date timeSent;
     private String message;
+    private String nameSender;
+    private int receiverId;
+    private int senderId;
     private StatusEnum status;
+    private Date timeSent;
+    private String id;
+
 }

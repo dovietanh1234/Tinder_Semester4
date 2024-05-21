@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)//JsonInclude -> sd chi dinh cac quy tac bao gom cac gia tri thuoc tinh trong JSON Serialize,
 // JsonInclude.Include.NON_NULL -> dam bao cac field ko null  chi lay cac field co data
 public class ReqRes {
+    private int Id_user;
     private int statusCode;
     private String error;
     private String message;
@@ -25,4 +26,5 @@ public class ReqRes {
     private String role;
     private String password;
     private User ourUser;
+    private Boolean isHasProfile;
 }

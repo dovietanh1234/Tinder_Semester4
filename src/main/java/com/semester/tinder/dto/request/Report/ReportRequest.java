@@ -14,7 +14,6 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportRequest {
-    private int id;
 
     private String content;
 

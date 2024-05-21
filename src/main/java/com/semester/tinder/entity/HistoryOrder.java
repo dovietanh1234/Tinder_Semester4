@@ -9,28 +9,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity(name = "images")
+import java.util.Date;
+
+@Entity(name="history_order")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Images {
+public class HistoryOrder {
 
     @Id
     private int id;
-
-    private String image;
 
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "u_id")
     private User user;
 
-    private String image2;
+    private double vnp_amount;
 
-    private String image3;
-
-    private String image4;
-
-    private String image5;
-
+    private String vnp_bank_code;
+    private String vnp_card_type;
+    private Date vnp_pay_date;
+    private String vnp_tmn_code;
 }

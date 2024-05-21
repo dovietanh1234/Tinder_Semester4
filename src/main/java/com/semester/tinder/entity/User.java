@@ -37,6 +37,10 @@ public class User implements UserDetails {
 
     private String password;
 
+    private String images;
+
+    private String gender;
+
     @JsonIgnore
     @OneToMany(mappedBy = "implementer")
     private List<Follower> people_i_follow;
@@ -47,8 +51,11 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        // ta sẽ tạo @ManyToMany cho một cột role nghĩa là: private List<Role> roles
+        // -> đưa roles vào "SimpleGrantedAuthority()" thì ta sẽ có 1 user sẽ có nhiều roles
         return List.of( new SimpleGrantedAuthority( role.getRole_name() ));
     }
+    // collection là mảng
 
 
     @Override
@@ -76,3 +83,5 @@ public class User implements UserDetails {
         return true;
     }
 }
+
+

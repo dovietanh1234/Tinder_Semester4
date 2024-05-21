@@ -1,5 +1,6 @@
 package com.semester.tinder.service.message;
 
+
 import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.*;
 import com.google.cloud.storage.Blob;
@@ -8,6 +9,7 @@ import com.google.firebase.cloud.StorageClient;
 import com.semester.tinder.dto.firebase.GetMessagedto;
 import com.semester.tinder.dto.firebase.Message;
 import com.semester.tinder.dto.firebase.MessageFormCreate;
+import com.semester.tinder.dto.request.RabbitMQ.Notification;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,10 +46,53 @@ try {
 
 }
 
-public String createSocketMessage(com.semester.tinder.dto.request.Test.Message message) throws ExecutionException, InterruptedException {
+    public String createNotify(Notification notification) {
+        try {
+            Firestore dbFirestore = FirestoreClient.getFirestore();
+
+            // ở đoạn code này có thể gay loi vi -> dx tuong chua dc tao ma ta da cap nhat lai gia tri -> gay error
+            ApiFuture<WriteResult> collectionApiFutre = dbFirestore.collection("notification").document(notification.getId()).set(notification);
+
+//    DocumentReference docRef = dbFirestore.collection("Message").document(message.getDocument_id());
+//    FieldValue increment = FieldValue.increment(1);
+//    docRef.update("id", increment);
+
+            return collectionApiFutre.get().getUpdateTime().toString();
+            // Cach khac phuc: su dung Firestore transaction -> confirm for set value & update id at the same time( primitive way )
+        }catch (Exception e){
+            return e.getMessage();
+        }
+
+    }
+
+    // XỬ LÝ LẤY TIN NHĂN REAL
+    public List<com.semester.tinder.dto.request.Test.Message> getMessages(GetMessagedto getMessagedto) throws ExecutionException, InterruptedException {
+
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+
+        CollectionReference collectionReference = dbFirestore.collection("TestMessage");
+
+        ApiFuture<QuerySnapshot> future =collectionReference.orderBy("timeSent", Query.Direction.DESCENDING).whereEqualTo("matchId", getMessagedto.getMatches_id()).offset(getMessagedto.getOffset()).limit(getMessagedto.getLimit()).get();//
+
+        QuerySnapshot querySnapshot = future.get();
+
+        List<com.semester.tinder.dto.request.Test.Message> messages = new ArrayList<>();
+
+        if ( !querySnapshot.isEmpty() ){
+            for ( DocumentSnapshot documentSnapshot : querySnapshot.getDocuments() ){
+                messages.add(documentSnapshot.toObject(com.semester.tinder.dto.request.Test.Message.class));
+            }
+        }
+
+        return messages;
+    }
+
+
+    public String createSocketMessage(com.semester.tinder.dto.request.Test.Message message) throws ExecutionException, InterruptedException {
 
     Firestore dbFirestore = FirestoreClient.getFirestore();
-    ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("TestMessage").document( UUID.randomUUID().toString() ).set(message);
+    message.setId( UUID.randomUUID().toString() );
+    ApiFuture<WriteResult> collectionApiFuture = dbFirestore.collection("TestMessage").document( message.getId() ).set(message);
     return collectionApiFuture.get().getUpdateTime().toString();
 }
 
@@ -76,11 +121,47 @@ public List<Message> getListM(GetMessagedto messagedto) throws ExecutionExceptio
 }
 
 
+// LẤY THÔNG BÁO GIỐNG NHƯ TIN NHẮN:  REAL
+public List<Notification> getListNotify( int receiverId ) throws ExecutionException, InterruptedException {
+
+    Firestore dbFirestore = FirestoreClient.getFirestore();
+    CollectionReference collectionReference = dbFirestore.collection("notification");
+
+    ApiFuture<QuerySnapshot> future =collectionReference.orderBy("timeNotify", Query.Direction.DESCENDING).whereEqualTo("receiverId", receiverId).limit(10).get();
+
+    QuerySnapshot querySnapshot = future.get();
+
+    List<Notification> notify = new ArrayList<>();
+
+    if ( !querySnapshot.isEmpty() ){
+
+        for ( DocumentSnapshot documentSnapshot : querySnapshot.getDocuments() ){
+            notify.add( documentSnapshot.toObject(Notification.class) );
+        }
+    }
+
+    return notify;
+}
+
+
 public String deleteM( String document_id ){
     Firestore dbFirestore = FirestoreClient.getFirestore();
     ApiFuture<WriteResult> writeResult =dbFirestore.collection("Message").document(document_id).delete();
     return "delete success";
 }
+
+// XỬ LÝ XOÁ TIN NHĂN REAL
+public String deleteMessage( String document_id ){
+    Firestore dbFirestore = FirestoreClient.getFirestore();
+    ApiFuture<WriteResult> writeResult =dbFirestore.collection("TestMessage").document(document_id).delete();
+    return "delete success";
+}
+
+    public String deleteNotify( String document_id ){
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        ApiFuture<WriteResult> writeResult =dbFirestore.collection("notification").document(document_id).delete();
+        return "delete success";
+    }
 
 
     public String uploadFile(MultipartFile multipartFile){
@@ -114,8 +195,41 @@ public String deleteM( String document_id ){
                urls.add(url);
            }
         }
-
         return urls;
+    }
+
+    // trả về 1 ảnh đầu tiền
+    public String AnImage(String images){
+      String[] parts = images.split(", ");
+      return parts[0];
+    }
+
+
+
+    public void deleteFiles(String images){
+        String[] parts = images.split(", ");
+
+        for( String part : parts ){
+            deleteUrl(part);
+        }
+
+    }
+
+    public void deleteUrl(String fileUrl){
+
+        try {
+            // get reference to firebase storage:
+            StorageClient storageClient = StorageClient.getInstance();
+
+            // extract the file name from url:
+            String filename = fileUrl.substring( fileUrl.lastIndexOf("/")+1 );
+
+            // delete name file:
+            storageClient.bucket().get(filename).delete();
+            return;
+        }catch (Exception e){
+            return;
+        }
 
     }
 

@@ -79,8 +79,6 @@ public class JWTAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-
-
         }
 
     //doFilterInternal -> thực hiện logic cho cửa filter của mình

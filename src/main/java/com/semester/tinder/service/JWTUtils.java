@@ -10,10 +10,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 @Component
@@ -29,8 +26,13 @@ public class JWTUtils {
     }
 
     public String generateToken(UserDetails userDetails){
+
+        Map<String, Object> Claims = new HashMap<>();
+        Claims.put("authorities", userDetails.getAuthorities());
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claims(Claims)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(Key)

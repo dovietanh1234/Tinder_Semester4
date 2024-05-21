@@ -1,10 +1,7 @@
 package com.semester.tinder.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,5 +39,11 @@ public class Profile {
     private String passions;
 
     private String about_me;
+
+    @Column(name = "life_style")
+    private String life_style;
+
+    @Column(name = "basic")
+    private String basic;
 
 }

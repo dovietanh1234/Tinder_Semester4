@@ -33,4 +33,9 @@ public class ProfileRequest {
     private String passions;
 
     private String about_me;
+
+    private String life_style;
+    private String basic;
+    private String gender;
+
 }

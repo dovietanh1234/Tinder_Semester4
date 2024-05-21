@@ -10,14 +10,18 @@ import com.semester.tinder.entity.User;
 import com.semester.tinder.repository.IReportRepo;
 import com.semester.tinder.repository.IUserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/user/report")
+@RequestMapping("/public/report")
 public class ReportController {
 
     @Autowired
@@ -26,25 +30,21 @@ public class ReportController {
     @Autowired
     private IUserRepo _iuserRepo;
 
-    @GetMapping("/getId")
-    public ResponseEntity<ApiResponse<Report>> getProfile(@RequestParam int reportId){
+    // get theo id user
+    @GetMapping("/getall")
+    public ResponseEntity<ApiResponse<List<Report>>> getAll(@RequestParam int page){
+        ApiResponse<List<Report>> result = new ApiResponse<>();
 
-        ApiResponse<Report> result = new ApiResponse<>();
+        PageRequest pageRequest = PageRequest.of( page, 30, Sort.by("id").descending() );
 
-        Optional<Report> p = _ireportRepo.findById(reportId);
-
-        if( p.isEmpty() ){
-            result.setMessage("error! data not found");
-            result.setCode(404);
-            return ResponseEntity.ok(result);
-        }
-
+        Page<Report> page1 = _ireportRepo.findAll(pageRequest);
         result.setMessage("successfully");
         result.setCode(200);
-        result.setResult( p.get() );
-        return ResponseEntity.ok(result);
+        result.setResult( page1.getContent() );
+        return ResponseEntity.ok( result );
 
     }
+
 
     @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse<String>> deleteP(@RequestParam int reportId){
